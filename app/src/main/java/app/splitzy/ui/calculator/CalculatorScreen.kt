@@ -1,0 +1,377 @@
+package app.splitzy.ui.calculator
+
+import android.os.Build
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.shape.CircleShape
+import app.splitzy.ui.theme.Motion
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.splitzy.R
+import app.splitzy.domain.SplitCurrency
+import app.splitzy.domain.TipSelection
+import app.splitzy.ui.brand.SplitzyLogo
+import app.splitzy.ui.calculator.components.BillAmountField
+import app.splitzy.ui.calculator.components.BreakdownCard
+import app.splitzy.ui.calculator.components.CurrencyChip
+import app.splitzy.ui.calculator.components.CurrencyPickerSheet
+import app.splitzy.ui.calculator.components.CustomTipDialog
+import app.splitzy.ui.calculator.components.PeopleStepper
+import app.splitzy.ui.calculator.components.PerPersonCard
+import app.splitzy.ui.calculator.components.ShareActions
+import app.splitzy.ui.calculator.components.TipSelector
+import app.splitzy.ui.theme.Sizes
+import app.splitzy.ui.theme.Spacing
+import app.splitzy.ui.theme.SplitzyTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+private const val COPIED_FEEDBACK_MS = 1_600L
+
+@Composable
+fun CalculatorRoute(
+    isDarkTheme: Boolean,
+    viewModel: CalculatorViewModel = viewModel(factory = CalculatorViewModel.Factory),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    CalculatorScreen(
+        state = state,
+        isDarkTheme = isDarkTheme,
+        onToggleTheme = { viewModel.onToggleTheme(isDarkTheme) },
+        onBillChange = viewModel::onBillChange,
+        onTipSelected = viewModel::onTipSelected,
+        onCurrencySelected = viewModel::onCurrencySelected,
+        onAddPerson = viewModel::onAddPerson,
+        onRemovePerson = viewModel::onRemovePerson,
+        onReset = viewModel::onReset,
+        onCopy = {
+            context.copyToClipboard(
+                label = context.getString(R.string.app_name),
+                text = state.currency.format(state.breakdown.perPerson),
+            )
+        },
+        onShare = { context.shareText(buildShareText(context.resources, state)) },
+    )
+}
+
+@Composable
+fun CalculatorScreen(
+    state: CalculatorUiState,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
+    onBillChange: (String) -> Unit,
+    onTipSelected: (TipSelection) -> Unit,
+    onCurrencySelected: (SplitCurrency) -> Unit,
+    onAddPerson: () -> Unit,
+    onRemovePerson: () -> Unit,
+    onReset: () -> Unit,
+    onCopy: () -> Unit,
+    onShare: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var showCustomTip by rememberSaveable { mutableStateOf(false) }
+    var justCopied by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val copiedMessage = stringResource(R.string.copied_message, state.currency.format(state.breakdown.perPerson))
+    LaunchedEffect(justCopied) {
+        if (justCopied) {
+            // Android 13+ shows its own clipboard confirmation; avoid doubling up.
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                launch { snackbarHostState.showSnackbar(copiedMessage) }
+            }
+            delay(COPIED_FEEDBACK_MS)
+            justCopied = false
+        }
+    }
+    var showCurrencyPicker by rememberSaveable { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+
+    BoxWithConstraints(modifier.fillMaxSize()) {
+        // On short screens (landscape phones) the tagline gives its space to the calculator.
+        val compactHeight = maxHeight < 640.dp
+
+        Surface(color = SplitzyTheme.extraColors.hero, modifier = Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxSize()) {
+                HeroHeader(
+                    showTagline = !compactHeight,
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme,
+                )
+
+                Surface(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            // One padding for whichever is taller: the keyboard or the gesture bar.
+                            .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
+                            .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .widthIn(max = Sizes.maxContentWidth)
+                                .fillMaxWidth()
+                                .padding(horizontal = Spacing.lg)
+                                .padding(top = Spacing.lg, bottom = Spacing.md),
+                            verticalArrangement = Arrangement.spacedBy(Spacing.lg),
+                        ) {
+                            Section(stringResource(R.string.bill_amount)) {
+                                BillAmountField(
+                                    text = state.billText,
+                                    currency = state.currency,
+                                    onTextChange = onBillChange,
+                                    trailing = {
+                                        CurrencyChip(state.currency, onClick = { showCurrencyPicker = true })
+                                    },
+                                )
+                            }
+                            Section(stringResource(R.string.tip_percentage)) {
+                                TipSelector(
+                                    selected = state.tip,
+                                    onPresetSelected = onTipSelected,
+                                    onCustomClick = { showCustomTip = true },
+                                )
+                            }
+                            Section(stringResource(R.string.people)) {
+                                PeopleStepper(
+                                    count = state.people,
+                                    canDecrease = state.canRemovePerson,
+                                    canIncrease = state.canAddPerson,
+                                    onDecrease = onRemovePerson,
+                                    onIncrease = onAddPerson,
+                                )
+                            }
+                            PerPersonCard(
+                                breakdown = state.breakdown,
+                                currency = state.currency,
+                                hasBill = state.hasBill,
+                            )
+                            Section(stringResource(R.string.breakdown)) {
+                                BreakdownCard(breakdown = state.breakdown, currency = state.currency)
+                            }
+                            ShareActions(
+                                enabled = state.hasBill,
+                                justCopied = justCopied,
+                                onCopy = {
+                                    onCopy()
+                                    justCopied = true
+                                },
+                                onShare = onShare,
+                            )
+                            ResetButton(onClick = {
+                                focusManager.clearFocus()
+                                onReset()
+                            })
+                        }
+                    }
+                }
+            }
+        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(Spacing.md),
+        )
+    }
+
+    if (showCurrencyPicker) {
+        CurrencyPickerSheet(
+            selected = state.currency,
+            onSelect = {
+                onCurrencySelected(it)
+                showCurrencyPicker = false
+            },
+            onDismiss = { showCurrencyPicker = false },
+        )
+    }
+
+    if (showCustomTip) {
+        CustomTipDialog(
+            initialPercent = (state.tip as? TipSelection.Custom)?.percent,
+            onConfirm = {
+                onTipSelected(TipSelection.Custom(it))
+                showCustomTip = false
+            },
+            onDismiss = { showCustomTip = false },
+        )
+    }
+}
+
+@Composable
+private fun HeroHeader(showTagline: Boolean, isDarkTheme: Boolean, onToggleTheme: () -> Unit) {
+    val colors = SplitzyTheme.extraColors
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = Spacing.lg)
+            .padding(top = Spacing.xs, bottom = Spacing.lg),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(Sizes.minTouchTarget),
+        ) {
+            SplitzyLogo(modifier = Modifier.weight(1f))
+            ThemeToggle(isDarkTheme = isDarkTheme, onClick = onToggleTheme)
+        }
+        if (showTagline) {
+            Spacer(Modifier.height(Spacing.md))
+            Text(
+                text = buildAnnotatedString {
+                    append(stringResource(R.string.tagline_start))
+                    append("\n")
+                    append(stringResource(R.string.tagline_not))
+                    append(" ")
+                    withStyle(SpanStyle(color = colors.heroAccent)) {
+                        append(stringResource(R.string.tagline_accent))
+                    }
+                },
+                style = MaterialTheme.typography.displaySmall,
+                color = colors.onHero,
+                modifier = Modifier.semantics { heading() },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ThemeToggle(isDarkTheme: Boolean, onClick: () -> Unit) {
+    val description = stringResource(if (isDarkTheme) R.string.theme_switch_light else R.string.theme_switch_dark)
+    FilledIconButton(
+        onClick = onClick,
+        shape = CircleShape,
+        colors = IconButtonDefaults.filledIconButtonColors(
+            containerColor = SplitzyTheme.extraColors.onHero.copy(alpha = 0.08f),
+            contentColor = SplitzyTheme.extraColors.onHero,
+        ),
+        modifier = Modifier.size(Sizes.minTouchTarget),
+    ) {
+        AnimatedContent(
+            targetState = isDarkTheme,
+            transitionSpec = {
+                (fadeIn(tween(Motion.SLOW)) + scaleIn(tween(Motion.SLOW), initialScale = 0.5f))
+                    .togetherWith(fadeOut(tween(Motion.FAST)) + scaleOut(tween(Motion.FAST), targetScale = 0.5f))
+            },
+            label = "themeIcon",
+        ) { dark ->
+            Icon(
+                imageVector = if (dark) Icons.Rounded.LightMode else Icons.Rounded.DarkMode,
+                contentDescription = description,
+            )
+        }
+    }
+}
+
+@Composable
+private fun Section(title: String, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.semantics { heading() },
+        )
+        content()
+    }
+}
+
+@Composable
+private fun ResetButton(onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp),
+    ) {
+        Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(Spacing.xs))
+        Text(stringResource(R.string.action_reset), style = MaterialTheme.typography.titleSmall)
+    }
+}
+
+@Preview(name = "Light", heightDp = 1100)
+@Composable
+private fun CalculatorScreenPreview() {
+    SplitzyTheme(darkTheme = false) {
+        CalculatorScreen(
+            state = CalculatorUiState(billText = "250"),
+            isDarkTheme = false, onToggleTheme = {},
+            onBillChange = {}, onTipSelected = {}, onCurrencySelected = {}, onAddPerson = {}, onRemovePerson = {}, onReset = {}, onCopy = {}, onShare = {},
+        )
+    }
+}

@@ -3,7 +3,13 @@ package app.splitzy.ui.calculator.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -62,11 +68,18 @@ private fun BreakdownRow(label: String, value: String, emphasised: Boolean = fal
             color = if (emphasised) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
-        Text(
+        Spacer(Modifier.width(Spacing.sm))
+        // Long amounts at large font sizes shrink to fit rather than clip.
+        BasicText(
             text = value,
-            style = base,
-            fontWeight = if (emphasised) FontWeight.Bold else FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
+            style = base.copy(
+                fontWeight = if (emphasised) FontWeight.Bold else FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.End,
+            ),
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = base.fontSize),
+            modifier = Modifier.weight(1.3f),
         )
     }
 }

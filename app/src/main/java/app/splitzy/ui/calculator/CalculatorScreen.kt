@@ -21,7 +21,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.shape.CircleShape
+import app.splitzy.ui.theme.Motion
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -73,11 +86,16 @@ import kotlinx.coroutines.launch
 private const val COPIED_FEEDBACK_MS = 1_600L
 
 @Composable
-fun CalculatorRoute(viewModel: CalculatorViewModel = viewModel(factory = CalculatorViewModel.Factory)) {
+fun CalculatorRoute(
+    isDarkTheme: Boolean,
+    viewModel: CalculatorViewModel = viewModel(factory = CalculatorViewModel.Factory),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     CalculatorScreen(
         state = state,
+        isDarkTheme = isDarkTheme,
+        onToggleTheme = { viewModel.onToggleTheme(isDarkTheme) },
         onBillChange = viewModel::onBillChange,
         onTipSelected = viewModel::onTipSelected,
         onCurrencySelected = viewModel::onCurrencySelected,
@@ -97,6 +115,8 @@ fun CalculatorRoute(viewModel: CalculatorViewModel = viewModel(factory = Calcula
 @Composable
 fun CalculatorScreen(
     state: CalculatorUiState,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     onBillChange: (String) -> Unit,
     onTipSelected: (TipSelection) -> Unit,
     onCurrencySelected: (SplitCurrency) -> Unit,
@@ -130,7 +150,11 @@ fun CalculatorScreen(
 
         Surface(color = SplitzyTheme.extraColors.hero, modifier = Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize()) {
-                HeroHeader(showTagline = !compactHeight)
+                HeroHeader(
+                    showTagline = !compactHeight,
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme,
+                )
 
                 Surface(
                     color = MaterialTheme.colorScheme.surface,
@@ -240,7 +264,7 @@ fun CalculatorScreen(
 }
 
 @Composable
-private fun HeroHeader(showTagline: Boolean) {
+private fun HeroHeader(showTagline: Boolean, isDarkTheme: Boolean, onToggleTheme: () -> Unit) {
     val colors = SplitzyTheme.extraColors
     Column(
         Modifier
@@ -256,6 +280,7 @@ private fun HeroHeader(showTagline: Boolean) {
                 .height(Sizes.minTouchTarget),
         ) {
             SplitzyLogo(modifier = Modifier.weight(1f))
+            ThemeToggle(isDarkTheme = isDarkTheme, onClick = onToggleTheme)
         }
         if (showTagline) {
             Spacer(Modifier.height(Spacing.md))
@@ -272,6 +297,34 @@ private fun HeroHeader(showTagline: Boolean) {
                 style = MaterialTheme.typography.displaySmall,
                 color = colors.onHero,
                 modifier = Modifier.semantics { heading() },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ThemeToggle(isDarkTheme: Boolean, onClick: () -> Unit) {
+    val description = stringResource(if (isDarkTheme) R.string.theme_switch_light else R.string.theme_switch_dark)
+    FilledIconButton(
+        onClick = onClick,
+        shape = CircleShape,
+        colors = IconButtonDefaults.filledIconButtonColors(
+            containerColor = SplitzyTheme.extraColors.onHero.copy(alpha = 0.08f),
+            contentColor = SplitzyTheme.extraColors.onHero,
+        ),
+        modifier = Modifier.size(Sizes.minTouchTarget),
+    ) {
+        AnimatedContent(
+            targetState = isDarkTheme,
+            transitionSpec = {
+                (fadeIn(tween(Motion.SLOW)) + scaleIn(tween(Motion.SLOW), initialScale = 0.5f))
+                    .togetherWith(fadeOut(tween(Motion.FAST)) + scaleOut(tween(Motion.FAST), targetScale = 0.5f))
+            },
+            label = "themeIcon",
+        ) { dark ->
+            Icon(
+                imageVector = if (dark) Icons.Rounded.LightMode else Icons.Rounded.DarkMode,
+                contentDescription = description,
             )
         }
     }
@@ -313,6 +366,7 @@ private fun CalculatorScreenPreview() {
     SplitzyTheme(darkTheme = false) {
         CalculatorScreen(
             state = CalculatorUiState(billText = "250"),
+            isDarkTheme = false, onToggleTheme = {},
             onBillChange = {}, onTipSelected = {}, onCurrencySelected = {}, onAddPerson = {}, onRemovePerson = {}, onReset = {}, onCopy = {}, onShare = {},
         )
     }

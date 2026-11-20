@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.splitzy.data.DataStoreUserPreferences
+import app.splitzy.data.ThemeMode
 import app.splitzy.data.UserPreferences
 import app.splitzy.domain.AmountInput
 import app.splitzy.domain.BillCalculator
@@ -73,6 +74,13 @@ class CalculatorViewModel(
         // Re-sanitise so e.g. "12.50" becomes "12" when switching to JPY.
         savedState[KEY_BILL] = AmountInput.sanitize(billText.value, selected.fractionDigits)
         viewModelScope.launch { preferences.setCurrencyCode(selected.code) }
+    }
+
+    /** Flips whatever is showing now, so the toggle always does the visible thing. */
+    fun onToggleTheme(isDarkNow: Boolean) {
+        viewModelScope.launch {
+            preferences.setThemeMode(if (isDarkNow) ThemeMode.Light else ThemeMode.Dark)
+        }
     }
 
     /** Clears the bill and restores default tip and people. Currency is a preference, so it stays. */

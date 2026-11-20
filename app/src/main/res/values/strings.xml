@@ -2,6 +2,8 @@
     <string name="app_name">Splitzy</string>
 
     <!-- Hero -->
+    <string name="theme_switch_light">Switch to light mode</string>
+    <string name="theme_switch_dark">Switch to dark mode</string>
     <string name="tagline_start">Split Bills.</string>
     <string name="tagline_not">Not</string>
     <string name="tagline_accent">Friendships.</string>

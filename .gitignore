@@ -1,0 +1,26 @@
+# Gradle / build outputs
+.gradle/
+build/
+/captures
+.externalNativeBuild
+.cxx
+.kotlin/
+
+# Local machine configuration
+local.properties
+
+# IDE
+*.iml
+.idea/
+!.idea/codeStyles/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Signing & secrets (never commit)
+*.jks
+*.keystore
+keystore.properties
+*.p12
+secrets.properties

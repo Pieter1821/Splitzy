@@ -44,6 +44,7 @@
         <item quantity="one">%1$d person pays %2$s so the total adds up</item>
         <item quantity="other">%1$d people pay %2$s so the total adds up</item>
     </plurals>
+    <string name="live_share">Each person pays %1$s</string>
     <string name="result_a11y">Each person pays %1$s</string>
 
     <!-- Breakdown -->

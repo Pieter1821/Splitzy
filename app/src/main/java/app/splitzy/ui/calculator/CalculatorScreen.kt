@@ -10,7 +10,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -166,7 +170,8 @@ fun CalculatorScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .imePadding()
+                            // One padding for whichever is taller: the keyboard or the gesture bar.
+                            .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
                             .verticalScroll(rememberScrollState()),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
@@ -175,8 +180,7 @@ fun CalculatorScreen(
                                 .widthIn(max = Sizes.maxContentWidth)
                                 .fillMaxWidth()
                                 .padding(horizontal = Spacing.lg)
-                                .padding(top = Spacing.lg, bottom = Spacing.md)
-                                .navigationBarsPadding(),
+                                .padding(top = Spacing.lg, bottom = Spacing.md),
                             verticalArrangement = Arrangement.spacedBy(Spacing.lg),
                         ) {
                             Section(stringResource(R.string.bill_amount)) {

@@ -1,5 +1,6 @@
 package app.splitzy.ui.calculator
 
+import android.os.Build
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -25,15 +26,20 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -56,14 +62,20 @@ import app.splitzy.ui.calculator.components.CurrencyPickerSheet
 import app.splitzy.ui.calculator.components.CustomTipDialog
 import app.splitzy.ui.calculator.components.PeopleStepper
 import app.splitzy.ui.calculator.components.PerPersonCard
+import app.splitzy.ui.calculator.components.ShareActions
 import app.splitzy.ui.calculator.components.TipSelector
 import app.splitzy.ui.theme.Sizes
 import app.splitzy.ui.theme.Spacing
 import app.splitzy.ui.theme.SplitzyTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+private const val COPIED_FEEDBACK_MS = 1_600L
 
 @Composable
 fun CalculatorRoute(viewModel: CalculatorViewModel = viewModel(factory = CalculatorViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     CalculatorScreen(
         state = state,
         onBillChange = viewModel::onBillChange,
@@ -72,6 +84,13 @@ fun CalculatorRoute(viewModel: CalculatorViewModel = viewModel(factory = Calcula
         onAddPerson = viewModel::onAddPerson,
         onRemovePerson = viewModel::onRemovePerson,
         onReset = viewModel::onReset,
+        onCopy = {
+            context.copyToClipboard(
+                label = context.getString(R.string.app_name),
+                text = state.currency.format(state.breakdown.perPerson),
+            )
+        },
+        onShare = { context.shareText(buildShareText(context.resources, state)) },
     )
 }
 
@@ -84,9 +103,24 @@ fun CalculatorScreen(
     onAddPerson: () -> Unit,
     onRemovePerson: () -> Unit,
     onReset: () -> Unit,
+    onCopy: () -> Unit,
+    onShare: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showCustomTip by rememberSaveable { mutableStateOf(false) }
+    var justCopied by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val copiedMessage = stringResource(R.string.copied_message, state.currency.format(state.breakdown.perPerson))
+    LaunchedEffect(justCopied) {
+        if (justCopied) {
+            // Android 13+ shows its own clipboard confirmation; avoid doubling up.
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                launch { snackbarHostState.showSnackbar(copiedMessage) }
+            }
+            delay(COPIED_FEEDBACK_MS)
+            justCopied = false
+        }
+    }
     var showCurrencyPicker by rememberSaveable { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
@@ -99,7 +133,7 @@ fun CalculatorScreen(
                 HeroHeader(showTagline = !compactHeight)
 
                 Surface(
-                    color = MaterialTheme.colorScheme.background,
+                    color = MaterialTheme.colorScheme.surface,
                     shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -155,6 +189,15 @@ fun CalculatorScreen(
                             Section(stringResource(R.string.breakdown)) {
                                 BreakdownCard(breakdown = state.breakdown, currency = state.currency)
                             }
+                            ShareActions(
+                                enabled = state.hasBill,
+                                justCopied = justCopied,
+                                onCopy = {
+                                    onCopy()
+                                    justCopied = true
+                                },
+                                onShare = onShare,
+                            )
                             ResetButton(onClick = {
                                 focusManager.clearFocus()
                                 onReset()
@@ -164,6 +207,13 @@ fun CalculatorScreen(
                 }
             }
         }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(Spacing.md),
+        )
     }
 
     if (showCurrencyPicker) {
@@ -263,7 +313,7 @@ private fun CalculatorScreenPreview() {
     SplitzyTheme(darkTheme = false) {
         CalculatorScreen(
             state = CalculatorUiState(billText = "250"),
-            onBillChange = {}, onTipSelected = {}, onCurrencySelected = {}, onAddPerson = {}, onRemovePerson = {}, onReset = {},
+            onBillChange = {}, onTipSelected = {}, onCurrencySelected = {}, onAddPerson = {}, onRemovePerson = {}, onReset = {}, onCopy = {}, onShare = {},
         )
     }
 }

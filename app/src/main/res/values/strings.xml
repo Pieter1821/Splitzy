@@ -53,4 +53,15 @@
 
     <!-- Actions -->
     <string name="action_reset">Reset</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_copied">Copied</string>
+    <string name="action_share">Share</string>
+    <string name="copied_message">%1$s copied</string>
+
+    <!-- Share -->
+    <string name="share_chooser_title">Share the split</string>
+    <string name="share_heading">Splitzy · Bill split</string>
+    <string name="share_line">%1$s: %2$s</string>
+    <string name="share_each_pays">Each person pays %1$s</string>
+    <string name="share_signature">Split Bills. Not Friendships.</string>
 </resources>

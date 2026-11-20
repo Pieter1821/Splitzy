@@ -19,8 +19,9 @@ object BrandColors {
 /** Neutral tints of Navy and Cloud used for surfaces, borders and secondary text. */
 private object Neutrals {
     val NavySurface = Color(0xFF17243A)
-    val NavyContainer = Color(0xFF1F2E48)
-    val NavyContainerHigh = Color(0xFF283A58)
+    val NavyContainerLow = Color(0xFF1D2B44)
+    val NavyContainer = Color(0xFF24354F)
+    val NavyContainerHigh = Color(0xFF2D405F)
     val NavyOutline = Color(0xFF34476A)
     val SlateText = Color(0xFF5B6679)
     val SlateTextOnDark = Color(0xFFA3AFC2)
@@ -71,7 +72,7 @@ internal val DarkColors = darkColorScheme(
     surfaceVariant = Neutrals.NavyContainer,
     onSurfaceVariant = Neutrals.SlateTextOnDark,
     surfaceContainerLowest = BrandColors.Navy,
-    surfaceContainerLow = Neutrals.NavySurface,
+    surfaceContainerLow = Neutrals.NavyContainerLow,
     surfaceContainer = Neutrals.NavyContainer,
     surfaceContainerHigh = Neutrals.NavyContainerHigh,
     surfaceContainerHighest = Neutrals.NavyContainerHigh,

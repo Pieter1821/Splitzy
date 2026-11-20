@@ -1,0 +1,9 @@
+# Splitzy baseline profile.
+# Pre-compiles the app's own code at install time so the first launches and the
+# first interactions don't run in the interpreter/JIT. Compose and AndroidX ship
+# their own profiles; this covers app.splitzy. The app is small, so every class
+# and method is included. R8 rewrites these rules to the obfuscated names.
+#
+# H = hot, S = run during startup, P = run after startup.
+HSPLapp/splitzy/**;->**(**)**
+Lapp/splitzy/**;

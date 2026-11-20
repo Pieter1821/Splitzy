@@ -21,10 +21,20 @@ android {
 
     buildTypes {
         release {
+            // Whole-app R8. Limiting optimisation to androidx/kotlin packages produced
+            // an IllegalAccessError at launch (a repackaged subclass of a package-private
+            // kotlin.sequences class), so the scope is left at its default.
             optimization {
                 enable = true
-                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
+        }
+        // Release-optimised build signed with the debug key, for local performance
+        // measurement only. Real releases use the release signing config.
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
         }
     }
     compileOptions {

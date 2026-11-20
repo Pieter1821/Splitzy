@@ -2,17 +2,24 @@ package app.splitzy.ui.calculator
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import app.splitzy.data.DataStoreUserPreferences
+import app.splitzy.data.UserPreferences
 import app.splitzy.domain.AmountInput
 import app.splitzy.domain.BillCalculator
 import app.splitzy.domain.Currencies
 import app.splitzy.domain.SplitCurrency
 import app.splitzy.domain.TipSelection
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.math.BigDecimal
 
 /**
@@ -21,9 +28,12 @@ import java.math.BigDecimal
  */
 class CalculatorViewModel(
     private val savedState: SavedStateHandle,
+    private val preferences: UserPreferences,
 ) : ViewModel() {
 
-    private val currency = MutableStateFlow(Currencies.Default)
+    private val currency: StateFlow<SplitCurrency> = preferences.currencyCode
+        .map(Currencies::byCode)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, Currencies.Default)
 
     private val billText = savedState.getStateFlow(KEY_BILL, "")
     private val tipPercent = savedState.getStateFlow(KEY_TIP, TipSelection.Default.value.toString())
@@ -60,9 +70,9 @@ class CalculatorViewModel(
     fun onRemovePerson() = setPeople(people.value - 1)
 
     fun onCurrencySelected(selected: SplitCurrency) {
-        currency.value = selected
         // Re-sanitise so e.g. "12.50" becomes "12" when switching to JPY.
         savedState[KEY_BILL] = AmountInput.sanitize(billText.value, selected.fractionDigits)
+        viewModelScope.launch { preferences.setCurrencyCode(selected.code) }
     }
 
     /** Clears the bill and restores default tip and people. Currency is a preference, so it stays. */
@@ -76,11 +86,20 @@ class CalculatorViewModel(
         savedState[KEY_PEOPLE] = count.coerceIn(BillCalculator.MIN_PEOPLE, BillCalculator.MAX_PEOPLE)
     }
 
-    private companion object {
-        const val KEY_BILL = "bill"
-        const val KEY_TIP = "tip_percent"
-        const val KEY_TIP_CUSTOM = "tip_custom"
-        const val KEY_PEOPLE = "people"
+    companion object {
+        val Factory = viewModelFactory {
+            initializer {
+                CalculatorViewModel(
+                    savedState = createSavedStateHandle(),
+                    preferences = DataStoreUserPreferences(checkNotNull(this[APPLICATION_KEY])),
+                )
+            }
+        }
+
+        private const val KEY_BILL = "bill"
+        private const val KEY_TIP = "tip_percent"
+        private const val KEY_TIP_CUSTOM = "tip_custom"
+        private const val KEY_PEOPLE = "people"
     }
 }
 

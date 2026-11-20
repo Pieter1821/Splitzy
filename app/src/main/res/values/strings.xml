@@ -10,6 +10,12 @@
     <string name="bill_amount">Bill amount</string>
     <string name="bill_placeholder">0</string>
 
+    <!-- Currency -->
+    <string name="currency_title">Currency</string>
+    <string name="currency_search">Search by name or code</string>
+    <string name="currency_no_results">No currencies match your search</string>
+    <string name="currency_change_a11y">Currency: %1$s. Tap to change</string>
+
     <!-- Tip -->
     <string name="tip_percentage">Tip</string>
     <string name="tip_value">%1$s%%</string>

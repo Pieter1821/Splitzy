@@ -46,10 +46,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.splitzy.R
+import app.splitzy.domain.SplitCurrency
 import app.splitzy.domain.TipSelection
 import app.splitzy.ui.brand.SplitzyLogo
 import app.splitzy.ui.calculator.components.BillAmountField
 import app.splitzy.ui.calculator.components.BreakdownCard
+import app.splitzy.ui.calculator.components.CurrencyChip
+import app.splitzy.ui.calculator.components.CurrencyPickerSheet
 import app.splitzy.ui.calculator.components.CustomTipDialog
 import app.splitzy.ui.calculator.components.PeopleStepper
 import app.splitzy.ui.calculator.components.PerPersonCard
@@ -59,12 +62,13 @@ import app.splitzy.ui.theme.Spacing
 import app.splitzy.ui.theme.SplitzyTheme
 
 @Composable
-fun CalculatorRoute(viewModel: CalculatorViewModel = viewModel()) {
+fun CalculatorRoute(viewModel: CalculatorViewModel = viewModel(factory = CalculatorViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     CalculatorScreen(
         state = state,
         onBillChange = viewModel::onBillChange,
         onTipSelected = viewModel::onTipSelected,
+        onCurrencySelected = viewModel::onCurrencySelected,
         onAddPerson = viewModel::onAddPerson,
         onRemovePerson = viewModel::onRemovePerson,
         onReset = viewModel::onReset,
@@ -76,12 +80,14 @@ fun CalculatorScreen(
     state: CalculatorUiState,
     onBillChange: (String) -> Unit,
     onTipSelected: (TipSelection) -> Unit,
+    onCurrencySelected: (SplitCurrency) -> Unit,
     onAddPerson: () -> Unit,
     onRemovePerson: () -> Unit,
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showCustomTip by rememberSaveable { mutableStateOf(false) }
+    var showCurrencyPicker by rememberSaveable { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
     BoxWithConstraints(modifier.fillMaxSize()) {
@@ -120,6 +126,9 @@ fun CalculatorScreen(
                                     text = state.billText,
                                     currency = state.currency,
                                     onTextChange = onBillChange,
+                                    trailing = {
+                                        CurrencyChip(state.currency, onClick = { showCurrencyPicker = true })
+                                    },
                                 )
                             }
                             Section(stringResource(R.string.tip_percentage)) {
@@ -155,6 +164,17 @@ fun CalculatorScreen(
                 }
             }
         }
+    }
+
+    if (showCurrencyPicker) {
+        CurrencyPickerSheet(
+            selected = state.currency,
+            onSelect = {
+                onCurrencySelected(it)
+                showCurrencyPicker = false
+            },
+            onDismiss = { showCurrencyPicker = false },
+        )
     }
 
     if (showCustomTip) {
@@ -243,7 +263,7 @@ private fun CalculatorScreenPreview() {
     SplitzyTheme(darkTheme = false) {
         CalculatorScreen(
             state = CalculatorUiState(billText = "250"),
-            onBillChange = {}, onTipSelected = {}, onAddPerson = {}, onRemovePerson = {}, onReset = {},
+            onBillChange = {}, onTipSelected = {}, onCurrencySelected = {}, onAddPerson = {}, onRemovePerson = {}, onReset = {},
         )
     }
 }

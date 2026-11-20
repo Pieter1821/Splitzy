@@ -1,3 +1,50 @@
 <resources>
     <string name="app_name">Splitzy</string>
+
+    <!-- Hero -->
+    <string name="tagline_start">Split Bills.</string>
+    <string name="tagline_not">Not</string>
+    <string name="tagline_accent">Friendships.</string>
+
+    <!-- Bill -->
+    <string name="bill_amount">Bill amount</string>
+    <string name="bill_placeholder">0</string>
+
+    <!-- Tip -->
+    <string name="tip_percentage">Tip</string>
+    <string name="tip_value">%1$s%%</string>
+    <string name="tip_custom">Custom</string>
+    <string name="tip_custom_title">Custom tip</string>
+    <string name="tip_custom_hint">Between 0% and 100%</string>
+    <string name="tip_custom_apply">Apply</string>
+    <string name="tip_custom_cancel">Cancel</string>
+    <string name="tip_selected_a11y">%1$s tip, selected</string>
+
+    <!-- People -->
+    <string name="people">People</string>
+    <string name="people_decrease">Remove a person</string>
+    <string name="people_increase">Add a person</string>
+    <plurals name="people_count_a11y">
+        <item quantity="one">%d person</item>
+        <item quantity="other">%d people</item>
+    </plurals>
+
+    <!-- Result -->
+    <string name="per_person">per person</string>
+    <string name="result_empty_hint">Enter the bill to see each share</string>
+    <plurals name="round_up_note">
+        <item quantity="one">%1$d person pays %2$s so the total adds up</item>
+        <item quantity="other">%1$d people pay %2$s so the total adds up</item>
+    </plurals>
+    <string name="result_a11y">Each person pays %1$s</string>
+
+    <!-- Breakdown -->
+    <string name="breakdown">Breakdown</string>
+    <string name="breakdown_bill">Bill amount</string>
+    <string name="breakdown_tip">Tip (%1$s%%)</string>
+    <string name="breakdown_total">Total</string>
+    <string name="breakdown_people">People</string>
+
+    <!-- Actions -->
+    <string name="action_reset">Reset</string>
 </resources>

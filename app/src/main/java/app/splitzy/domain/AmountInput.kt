@@ -21,13 +21,14 @@ object AmountInput {
                     if (integer.length < MAX_INTEGER_DIGITS) integer.append(char)
                 char.isAsciiDigit() ->
                     if (fraction.length < fractionDigits) fraction.append(char)
-                char.isSeparator() && !seenSeparator && fractionDigits > 0 ->
+                // Digits after the separator are dropped for currencies without decimals.
+                char.isSeparator() && !seenSeparator ->
                     seenSeparator = true
             }
         }
 
-        val cleanInteger = integer.toString().trimStart('0').ifEmpty { if (integer.isNotEmpty() || seenSeparator) "0" else "" }
-        return if (seenSeparator) "$cleanInteger.$fraction" else cleanInteger
+        val cleanInteger = integer.toString().trimStart('0').ifEmpty { if (integer.isNotEmpty() || (seenSeparator && fractionDigits > 0)) "0" else "" }
+        return if (seenSeparator && fractionDigits > 0) "$cleanInteger.$fraction" else cleanInteger
     }
 
     /** Parses sanitized text; empty or bare "0." counts as zero. */

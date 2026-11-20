@@ -16,6 +16,13 @@ Splitzy is a fast, offline bill-splitting calculator for Android. Enter the bill
 - Adaptive launcher icon with a themed (monochrome) layer, and a branded splash screen
 - No account, no ads, no permissions, no network
 
+## Screen sizes and performance
+
+- The layout follows the **app window**, not the device. Below 600dp it uses one column; at 600dp and wider (large phones in landscape, unfolded foldables, tablets) inputs and results sit side by side, capped at 1040dp.
+- The tagline gives way on short windows and at large font sizes. Copy and Share stack when side by side would truncate them. Amounts shrink to fit instead of clipping.
+- While you type a bill on a phone, a live "Each person pays …" line stays visible above the keyboard.
+- Test results, device configurations and measured numbers are in [`docs/LIVE_CHECKLIST.md`](docs/LIVE_CHECKLIST.md).
+
 ## Tech stack
 
 | Area | Choice |
@@ -67,6 +74,9 @@ Requirements: Android Studio (recent stable) or JDK 17+ with the Android SDK.
 
 # Unit tests
 ./gradlew testDebugUnitTest
+
+# Release-optimised (R8) build, debug-signed, for local performance checks
+./gradlew assembleBenchmark
 ```
 
 In Android Studio, open the project folder, wait for Gradle sync, then run the `app` configuration.

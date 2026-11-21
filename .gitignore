@@ -24,3 +24,6 @@ Thumbs.db
 keystore.properties
 *.p12
 secrets.properties
+
+# Local-only documents (not published)
+/docs/

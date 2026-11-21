@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "app.splitzy"
+        applicationId = "za.co.splitzy"
         minSdk = 24
         targetSdk = 37
         versionCode = 2

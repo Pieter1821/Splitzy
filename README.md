@@ -4,6 +4,15 @@
 
 An offline Android bill-splitting calculator. You enter the bill, pick a tip and set how many people are paying, and it shows what each person owes.
 
+<!-- Google Play link goes here once the app is published -->
+
+<p align="center">
+  <img src="docs/screenshots/calculator.png" width="200" alt="Calculator with a R1,245.90 bill, 15% tip, split 4 ways">
+  <img src="docs/screenshots/breakdown.png" width="200" alt="Per-person result, breakdown, and Copy and Share buttons">
+  <img src="docs/screenshots/dark.png" width="200" alt="Calculator in dark mode">
+  <img src="docs/screenshots/currency.png" width="200" alt="Currency picker with search">
+</p>
+
 ## What it does
 
 - Tip presets of 0, 10, 12, 15, 18 and 20%, or a custom tip from 0 to 100%

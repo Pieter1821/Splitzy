@@ -45,3 +45,5 @@ app/src/main/java/app/splitzy/
 ```
 
 Built with Kotlin, Jetpack Compose and Material 3. Money is handled with `BigDecimal` throughout. minSdk 24, targetSdk 37.
+
+[Privacy policy](docs/PRIVACY.md)

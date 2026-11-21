@@ -56,6 +56,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -93,6 +94,7 @@ fun CalculatorRoute(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val resources = LocalResources.current
     CalculatorScreen(
         state = state,
         actions = CalculatorActions(
@@ -105,11 +107,11 @@ fun CalculatorRoute(
             onReset = viewModel::onReset,
             onCopy = {
                 context.copyToClipboard(
-                    label = context.getString(R.string.app_name),
+                    label = resources.getString(R.string.app_name),
                     text = state.currency.format(state.breakdown.perPerson),
                 )
             },
-            onShare = { context.shareText(buildShareText(context.resources, state)) },
+            onShare = { context.shareText(buildShareText(resources, state)) },
         ),
         isDarkTheme = isDarkTheme,
     )

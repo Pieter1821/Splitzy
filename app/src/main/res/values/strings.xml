@@ -26,7 +26,6 @@
     <string name="tip_custom_hint">Between 0% and 100%</string>
     <string name="tip_custom_apply">Apply</string>
     <string name="tip_custom_cancel">Cancel</string>
-    <string name="tip_selected_a11y">%1$s tip, selected</string>
 
     <!-- People -->
     <string name="people">People</string>

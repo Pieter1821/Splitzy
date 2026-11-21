@@ -7,10 +7,10 @@ An offline Android bill-splitting calculator. You enter the bill, pick a tip and
 <!-- Google Play link goes here once the app is published -->
 
 <p align="center">
-  <img src="docs/screenshots/calculator.png" width="200" alt="Calculator with a R1,245.90 bill, 15% tip, split 4 ways">
-  <img src="docs/screenshots/breakdown.png" width="200" alt="Per-person result, breakdown, and Copy and Share buttons">
-  <img src="docs/screenshots/dark.png" width="200" alt="Calculator in dark mode">
-  <img src="docs/screenshots/currency.png" width="200" alt="Currency picker with search">
+  <img src="screenshots/calculator.png" width="200" alt="Calculator with a R1,245.90 bill, 15% tip, split 4 ways">
+  <img src="screenshots/breakdown.png" width="200" alt="Per-person result, breakdown, and Copy and Share buttons">
+  <img src="screenshots/dark.png" width="200" alt="Calculator in dark mode">
+  <img src="screenshots/currency.png" width="200" alt="Currency picker with search">
 </p>
 
 ## What it does
@@ -45,5 +45,3 @@ app/src/main/java/app/splitzy/
 ```
 
 Built with Kotlin, Jetpack Compose and Material 3. Money is handled with `BigDecimal` throughout. minSdk 24, targetSdk 37.
-
-[Privacy policy](docs/PRIVACY.md)

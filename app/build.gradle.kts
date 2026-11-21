@@ -1,7 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
+
+// Release signing: read from local.properties (git-ignored), or from environment
+// variables in CI. Without them, release builds are simply left unsigned.
+val localProps = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+fun signingValue(key: String, env: String): String? =
+    localProps.getProperty(key) ?: System.getenv(env)
+val releaseStoreFile = signingValue("splitzy.storeFile", "SPLITZY_STORE_FILE")
 
 android {
     namespace = "app.splitzy"
@@ -19,8 +30,20 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = file(releaseStoreFile)
+                storePassword = signingValue("splitzy.storePassword", "SPLITZY_STORE_PASSWORD")
+                keyAlias = signingValue("splitzy.keyAlias", "SPLITZY_KEY_ALIAS")
+                keyPassword = signingValue("splitzy.keyPassword", "SPLITZY_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             // Whole-app R8. Limiting optimisation to androidx/kotlin packages produced
             // an IllegalAccessError at launch (a repackaged subclass of a package-private
             // kotlin.sequences class), so the scope is left at its default.
